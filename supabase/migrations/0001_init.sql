@@ -61,7 +61,7 @@ create table topups (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references organisations(id),
   user_id uuid not null references profiles(id),
-  amount numeric(12,2) not null,          -- what was paid out (= spent since previous top-up)
+  amount numeric(12,2) not null,
   allowance_at_time numeric(12,2) not null,
   topped_up_by uuid references profiles(id),
   topped_up_at timestamptz not null default now()
@@ -69,29 +69,26 @@ create table topups (
 create index on topups (user_id, topped_up_at desc);
 
 -- ---------- helpers ----------
-create or replace function current_role() returns user_role language sql stable security definer as $$
+create or replace function my_role() returns user_role language sql stable security definer as $$
   select role from profiles where id = auth.uid()
 $$;
 create or replace function current_org() returns uuid language sql stable security definer as $$
   select org_id from profiles where id = auth.uid()
 $$;
 create or replace function is_admin() returns boolean language sql stable as $$
-  select current_role() in ('org_admin','admin')
+  select my_role() in ('org_admin','admin')
 $$;
 
--- allowance for a user
 create or replace function user_allowance(uid uuid) returns numeric language sql stable as $$
   select coalesce(p.allowance_override, o.default_allowance)
   from profiles p join organisations o on o.id = p.org_id where p.id = uid
 $$;
 
--- last top-up timestamp (or account creation)
 create or replace function period_start(uid uuid) returns timestamptz language sql stable as $$
   select coalesce((select max(topped_up_at) from topups where user_id = uid),
                   (select created_at from profiles where id = uid))
 $$;
 
--- one row per active person: allowance, spent since last top-up, remaining
 create or replace view balances as
 select p.id as user_id, p.org_id, p.email, p.full_name, p.role, p.active,
        user_allowance(p.id) as allowance,
@@ -101,7 +98,6 @@ select p.id as user_id, p.org_id, p.email, p.full_name, p.role, p.active,
        (select count(*) from expenses e where e.user_id = p.id and e.created_at > period_start(p.id) and e.receipt_path is null) as missing_receipts
 from profiles p;
 
--- can this user log against this project?
 create or replace function can_log(pid uuid) returns boolean language sql stable as $$
   select exists (
     select 1 from projects pr where pr.id = pid and pr.status = 'active' and pr.org_id = current_org()
@@ -109,7 +105,6 @@ create or replace function can_log(pid uuid) returns boolean language sql stable
   )
 $$;
 
--- mark a person as topped up (admin only). Amount = spent since last top-up.
 create or replace function mark_topped_up(uid uuid) returns void language plpgsql security definer as $$
 declare v_spent numeric; v_allow numeric;
 begin
@@ -119,7 +114,6 @@ begin
   values (current_org(), uid, v_spent, v_allow, auth.uid());
 end $$;
 
--- auto-create profile on signup, attach to the single org
 create or replace function handle_new_user() returns trigger language plpgsql security definer as $$
 declare v_org uuid;
 begin
@@ -142,11 +136,11 @@ alter table expenses enable row level security;
 alter table topups enable row level security;
 
 create policy org_read on organisations for select using (id = current_org());
-create policy org_update on organisations for update using (id = current_org() and current_role() = 'org_admin');
+create policy org_update on organisations for update using (id = current_org() and my_role() = 'org_admin');
 
 create policy profiles_read on profiles for select using (org_id = current_org());
 create policy profiles_self on profiles for update using (id = auth.uid()) with check (role = (select role from profiles where id = auth.uid()));
-create policy profiles_orgadmin on profiles for update using (org_id = current_org() and current_role() = 'org_admin');
+create policy profiles_orgadmin on profiles for update using (org_id = current_org() and my_role() = 'org_admin');
 
 create policy projects_read on projects for select using (org_id = current_org());
 create policy projects_write on projects for all using (org_id = current_org() and is_admin()) with check (org_id = current_org());
