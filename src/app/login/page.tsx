@@ -10,7 +10,7 @@ export default function Login() {
   return (
     <main className="min-h-dvh grid place-items-center p-6">
       <div className="card w-full max-w-sm">
-        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-peach-vivid via-blush-vivid to-lilac-vivid grid place-items-center font-display text-2xl font-semibold text-white shadow-pop mb-4">Z</div>
+        <img src="/logo.svg" alt="Zaka logo" className="h-14 w-14 rounded-2xl shadow-soft ring-1 ring-line mb-4" />
         <h1 className="font-display text-3xl mb-1">Zaka</h1>
         <p className="text-muted mb-6">Sign in with your work email. We&apos;ll send a link.</p>
         {sent ? <p className="bg-mint text-mint-ink rounded-xl p-4">Check your inbox for the sign-in link.</p> : (

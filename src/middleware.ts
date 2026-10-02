@@ -15,4 +15,4 @@ export async function middleware(req: NextRequest) {
   if (user && req.nextUrl.pathname === "/login") return NextResponse.redirect(new URL("/", req.url));
   return res;
 }
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"] };
