@@ -20,14 +20,14 @@ export default async function Dashboard() {
           <div className="absolute -right-10 -top-16 h-56 w-56 rounded-full bg-peach opacity-50" />
           <div className="absolute right-16 -bottom-24 h-44 w-44 rounded-full bg-butter opacity-60" />
           <div className="relative"><p className="text-sm">Remaining</p>
-            <div className="font-display text-6xl my-2">{money(b.remaining)}</div>
+            <div className="font-display text-5xl sm:text-6xl my-2">{money(b.remaining)}</div>
             <p className="text-sm opacity-90">{money(b.spent)} spent of your {money(b.allowance)} allowance</p>
             <div className="h-2.5 rounded-full bg-white/60 mt-4 overflow-hidden"><div className="h-full bg-mint-ink rounded-full" style={{ width: `${pct}%` }} /></div></div>
         </div>
         <Stat cls="bg-peri text-peri-ink" label="Expenses logged" value={String(expenses?.length ?? 0)} />
         <Stat cls="bg-blush text-blush-ink" label="Missing receipts" value={String(b.missing_receipts)} />
       </div>
-      <div className="flex gap-2 my-6"><Link href="/expenses/new" className="btn">Log an expense</Link><span className="flex-1" /><a href="/api/export?scope=mine" className="btn-line">Export CSV</a></div>
+      <div className="flex flex-wrap gap-2 my-6"><Link href="/expenses/new" className="btn">Log an expense</Link><span className="flex-1" /><a href="/api/export?scope=mine" className="btn-line">Export CSV</a></div>
       <div className="card p-0 overflow-x-auto"><table className="tbl">
         <thead><tr><th>Date</th><th>Project</th><th>Category</th><th>Note</th><th>Receipt</th><th className="text-right">Amount</th><th /></tr></thead>
         <tbody>{expenses?.map((e: any) => (

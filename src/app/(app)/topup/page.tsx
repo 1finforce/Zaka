@@ -17,7 +17,7 @@ export default async function Topup({ searchParams }: { searchParams: Promise<{ 
         <div className="col-span-6 md:col-span-4 rounded-xl2 p-5 bg-butter text-butter-ink"><div className="text-sm opacity-80">Outstanding</div><div className="font-display text-3xl mt-1">{outstanding.length} of {people.length}</div></div>
         <div className="col-span-6 md:col-span-4 rounded-xl2 p-5 bg-blush text-blush-ink"><div className="text-sm opacity-80">Overspent</div><div className="font-display text-3xl mt-1">{overspent.length}</div></div>
       </div>
-      <div className="flex gap-1.5 mb-4">{Tab("outstanding", `Outstanding (${outstanding.length})`)}{Tab("clear", "Nothing owed")}{Tab("all", "Everyone")}</div>
+      <div className="flex flex-wrap gap-1.5 mb-4">{Tab("outstanding", `Outstanding (${outstanding.length})`)}{Tab("clear", "Nothing owed")}{Tab("all", "Everyone")}</div>
       <form action={markTopped}>
         <div className="card p-0 overflow-x-auto"><table className="tbl">
           <thead><tr><th /><th>Person</th><th className="text-right">Allowance</th><th className="text-right">Spent since last top-up</th><th className="text-right">Remaining</th><th className="text-right">Pay out</th><th>Last topped up</th></tr></thead>
@@ -28,7 +28,7 @@ export default async function Topup({ searchParams }: { searchParams: Promise<{ 
               <td>{p.remaining < 0 ? <span className="tag bg-blush text-blush-ink">Overspent</span> : p.spent > 0 ? <span className="tag bg-butter text-butter-ink">Pending</span> : <span className="tag bg-mint text-mint-ink">Clear</span>} <span className="text-xs text-muted ml-1">{new Date(p.period_start).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}</span></td></tr>
           ))}{!list.length && <tr><td colSpan={7} className="text-muted text-center py-10">Nobody here.</td></tr>}</tbody>
         </table></div>
-        <div className="flex gap-2 mt-4"><button className="btn">Mark selected as paid out</button><span className="flex-1" /><a href="/api/export?scope=all" className="btn-line">Export all expenses</a><a href="/api/export?scope=topups" className="btn-line">Export top-up history</a></div>
+        <div className="flex flex-wrap gap-2 mt-4"><button className="btn">Mark selected as paid out</button><span className="flex-1" /><a href="/api/export?scope=all" className="btn-line">Export all expenses</a><a href="/api/export?scope=topups" className="btn-line">Export top-up history</a></div>
       </form>
     </>
   );

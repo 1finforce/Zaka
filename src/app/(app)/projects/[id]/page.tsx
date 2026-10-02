@@ -22,13 +22,13 @@ export default async function ProjectStats({ params, searchParams }: { params: P
   const prev = months[4]?.total ?? 0; const delta = prev ? Math.round(((months[5].total - prev) / prev) * 100) : null;
   const Tab = (k: string, l: string) => <Link key={k} href={`?range=${k}`} className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${range === k ? "bg-panel border border-line" : "text-muted"}`}>{l}</Link>;
   const HBar = ({ label, v, max, cls }: { label: string; v: number; max: number; cls: string }) => (
-    <div className="grid grid-cols-[120px_1fr_80px] gap-3 items-center text-sm my-2"><span className="truncate">{label}</span><div className="h-3 rounded-full bg-bg overflow-hidden"><div className={`h-full rounded-full ${cls}`} style={{ width: `${max ? (v / max) * 100 : 0}%` }} /></div><span className="text-right text-muted">{money(v)}</span></div>);
+    <div className="grid grid-cols-[minmax(0,120px)_1fr_auto] gap-3 items-center text-sm my-2"><span className="truncate">{label}</span><div className="h-3 rounded-full bg-bg overflow-hidden"><div className={`h-full rounded-full ${cls}`} style={{ width: `${max ? (v / max) * 100 : 0}%` }} /></div><span className="text-right text-muted">{money(v)}</span></div>);
   return (
     <>
       <div className="text-sm text-muted mb-2"><Link href="/projects" className="underline">Projects</Link> / {project.name}</div>
       <h1 className="font-display text-3xl mb-1">{project.name}</h1>
       <p className="text-muted mb-4">{project.code} · {project.access === "all" ? "open to everyone" : "restricted"}</p>
-      <div className="flex gap-1.5 mb-5">{Tab("month", "This month")}{Tab("quarter", "Last 3 months")}{Tab("all", "All time")}</div>
+      <div className="flex flex-wrap gap-1.5 mb-5">{Tab("month", "This month")}{Tab("quarter", "Last 3 months")}{Tab("all", "All time")}</div>
       <div className="grid grid-cols-12 gap-4">
         <Stat cls="bg-peri text-peri-ink" l="Spent" v={money(total)} />
         <Stat cls="bg-mint text-mint-ink" l="vs last month" v={delta === null ? "—" : `${delta > 0 ? "+" : ""}${delta}%`} />

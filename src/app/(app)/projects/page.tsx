@@ -19,7 +19,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
       <h1 className="font-display text-3xl mb-1">Projects</h1>
       <p className="text-muted mb-6">Anyone can log against an open project. Restricted projects need a named list.</p>
       <div className="flex gap-2 mb-4 flex-wrap"><Link href="/projects?new=1" className="btn-soft">New project</Link><span className="flex-1" />
-        <form action={importProjects} className="flex gap-2 items-center"><input type="file" name="file" accept=".csv" required className="text-sm" /><button className="btn-line">Import CSV</button></form>
+        <form action={importProjects} className="flex flex-wrap gap-2 items-center min-w-0"><input type="file" name="file" accept=".csv" required className="text-sm min-w-0 max-w-full" /><button className="btn-line">Import CSV</button></form>
         <a href="/api/export?scope=projects" className="btn-line">Export CSV</a></div>
       {editing && (
         <form action={saveProject} className="card grid md:grid-cols-2 gap-4 mb-6">
