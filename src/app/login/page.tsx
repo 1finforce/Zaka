@@ -8,7 +8,7 @@ export default function Login() {
     error ? setErr(error.message) : setSent(true);
   };
   return (
-    <main className="min-h-screen grid place-items-center p-6">
+    <main className="min-h-dvh grid place-items-center p-6">
       <div className="card w-full max-w-sm">
         <h1 className="font-display text-3xl mb-1">Zaka</h1>
         <p className="text-muted mb-6">Sign in with your work email. We&apos;ll send a link.</p>
