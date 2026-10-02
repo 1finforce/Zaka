@@ -1,12 +1,15 @@
 import { requireAdmin, money } from "@/lib/session";
 import { invite, updatePerson, setDefaultAllowance } from "./actions";
-export default async function People() {
+export default async function People({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
   const { supabase, profile } = await requireAdmin(); const orgAdmin = profile.role === "org_admin";
+  const sp = await searchParams;
   const [{ data: org }, { data: people }] = await Promise.all([supabase.from("organisations").select("*").single(), supabase.from("profiles").select("*").order("full_name")]);
   return (
     <>
       <h1 className="font-display text-3xl mb-1">People</h1>
       <p className="text-muted mb-6">Invite by email. The default allowance is {money(org?.default_allowance ?? 0)}; override it per person if needed.</p>
+      {sp.ok && <div className="bg-mint text-mint-ink rounded-xl p-4 mb-4">{sp.ok}</div>}
+      {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4">{sp.err}</div>}
       {orgAdmin && (<div className="grid md:grid-cols-2 gap-4 mb-6">
         <form action={invite} className="card grid gap-3"><h2 className="font-semibold">Invite someone</h2>
           <input name="full_name" placeholder="Full name" required className="input" /><input name="email" type="email" placeholder="email@company.com" required className="input" />
