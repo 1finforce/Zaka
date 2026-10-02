@@ -13,9 +13,9 @@ export default async function Topup({ searchParams }: { searchParams: Promise<{ 
       <h1 className="font-display text-3xl mb-1">Monthly top-up</h1>
       <p className="text-muted mb-6">Pay each person what they&apos;ve spent, then mark it done. Their balance resets to their allowance the moment you do.</p>
       <div className="grid grid-cols-12 gap-4 mb-6">
-        <div className="col-span-12 md:col-span-4 rounded-xl2 p-5 bg-peach text-peach-ink"><div className="text-sm opacity-80">Total to pay out</div><div className="font-display text-3xl mt-1">{money(totalDue)}</div></div>
-        <div className="col-span-6 md:col-span-4 rounded-xl2 p-5 bg-butter text-butter-ink"><div className="text-sm opacity-80">Outstanding</div><div className="font-display text-3xl mt-1">{outstanding.length} of {people.length}</div></div>
-        <div className="col-span-6 md:col-span-4 rounded-xl2 p-5 bg-blush text-blush-ink"><div className="text-sm opacity-80">Overspent</div><div className="font-display text-3xl mt-1">{overspent.length}</div></div>
+        <div className="col-span-12 md:col-span-4 tile p-5 bg-peach text-peach-ink"><div className="text-sm opacity-80">Total to pay out</div><div className="font-display text-3xl mt-1">{money(totalDue)}</div></div>
+        <div className="col-span-6 md:col-span-4 tile p-5 bg-butter text-butter-ink"><div className="text-sm opacity-80">Outstanding</div><div className="font-display text-3xl mt-1">{outstanding.length} of {people.length}</div></div>
+        <div className="col-span-6 md:col-span-4 tile p-5 bg-blush text-blush-ink"><div className="text-sm opacity-80">Overspent</div><div className="font-display text-3xl mt-1">{overspent.length}</div></div>
       </div>
       <div className="flex flex-wrap gap-1.5 mb-4">{Tab("outstanding", `Outstanding (${outstanding.length})`)}{Tab("clear", "Nothing owed")}{Tab("all", "Everyone")}</div>
       <form action={markTopped}>

@@ -16,8 +16,9 @@ export default async function Dashboard() {
       <h1 className="font-display text-3xl mb-1">Hi {profile.full_name?.split(" ")[0] ?? "there"}</h1>
       <p className="text-muted mb-6">Balance since your last top-up on {since}</p>
       <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12 md:col-span-6 rounded-xl2 p-6 bg-mint text-mint-ink relative overflow-hidden">
-          <div className="absolute -right-10 -top-16 h-56 w-56 rounded-full bg-peach opacity-50" />
+        <div className="col-span-12 md:col-span-6 rounded-xl2 p-6 bg-gradient-to-br from-mint via-sky to-peri text-mint-ink relative overflow-hidden shadow-soft">
+          <div className="absolute -right-10 -top-16 h-56 w-56 rounded-full bg-peach opacity-60" />
+          <div className="absolute right-24 top-6 h-10 w-10 rounded-full border-[6px] border-white/50" />
           <div className="absolute right-16 -bottom-24 h-44 w-44 rounded-full bg-butter opacity-60" />
           <div className="relative"><p className="text-sm">Remaining</p>
             <div className="font-display text-5xl sm:text-6xl my-2">{money(b.remaining)}</div>
@@ -41,5 +42,5 @@ export default async function Dashboard() {
   );
 }
 function Stat({ cls, label, value }: { cls: string; label: string; value: string }) {
-  return <div className={`col-span-6 md:col-span-3 rounded-xl2 p-6 ${cls}`}><div className="text-sm opacity-80">{label}</div><div className="font-display text-3xl mt-1">{value}</div></div>;
+  return <div className={`tile col-span-6 md:col-span-3 p-5 sm:p-6 ${cls}`}><div className="text-sm opacity-80">{label}</div><div className="font-display text-3xl mt-1">{value}</div></div>;
 }

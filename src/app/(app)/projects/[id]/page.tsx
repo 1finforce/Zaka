@@ -45,4 +45,4 @@ export default async function ProjectStats({ params, searchParams }: { params: P
     </>
   );
 }
-function Stat({ cls, l, v }: { cls: string; l: string; v: string }) { return <div className={`col-span-6 md:col-span-3 rounded-xl2 p-5 ${cls}`}><div className="text-sm opacity-80">{l}</div><div className="font-display text-2xl sm:text-3xl mt-1">{v}</div></div>; }
+function Stat({ cls, l, v }: { cls: string; l: string; v: string }) { return <div className={`tile col-span-6 md:col-span-3 p-5 ${cls}`}><div className="text-sm opacity-80">{l}</div><div className="font-display text-2xl sm:text-3xl mt-1">{v}</div></div>; }
