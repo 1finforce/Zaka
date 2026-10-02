@@ -5,7 +5,7 @@ Stack matches 1FinForce: Next.js 15 App Router, TypeScript, Tailwind, Supabase (
 
 ## Setup
 1. Create a Supabase project (eu-central-1 / Frankfurt). Copy URL + anon key + service role key into `.env.local`.
-2. Run `supabase/migrations/0001_init.sql` in the SQL editor (or `supabase db push`).
+2. Run the files in `supabase/migrations/` in order in the SQL editor (or `supabase db push`).
 3. In Supabase Auth, enable Email + magic links; set Site URL to your app URL and add `/auth/callback` to redirect URLs.
 4. `npm i && npm run dev`.
 5. Sign in with the first email. Then in SQL: `update profiles set role='org_admin' where email='you@company.com';` — the first org admin is set once by hand; everything after that is done in the People screen.

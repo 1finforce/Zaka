@@ -6,6 +6,12 @@ import { redirect } from "next/navigation";
 
 export async function createExpense(form: FormData) {
   const { supabase, profile } = await requireProfile();
+  const client_ref = String(form.get("client_ref") ?? "") || null;
+  // a repeat submit of the same form: the first one already saved it
+  if (client_ref) {
+    const { data: dup } = await supabase.from("expenses").select("id").eq("user_id", profile.id).eq("client_ref", client_ref).maybeSingle();
+    if (dup) { revalidatePath("/"); redirect("/"); }
+  }
   const file = form.get("receipt") as File | null;
   let receipt_path: string | null = null;
   if (file && file.size > 0) {
@@ -13,11 +19,15 @@ export async function createExpense(form: FormData) {
     const { error } = await supabase.storage.from("receipts").upload(receipt_path, file, { contentType: file.type });
     if (error) throw new Error("Receipt upload failed: " + error.message);
   }
-  const { error } = await supabase.from("expenses").insert({
+  const row = {
     org_id: profile.org_id, user_id: profile.id, project_id: form.get("project_id"),
     spent_on: form.get("spent_on"), amount: Number(form.get("amount")), category: form.get("category"), note: form.get("note") || null, receipt_path,
-  });
-  if (error) throw new Error(error.message);
+  };
+  let { error } = await supabase.from("expenses").insert({ ...row, client_ref });
+  // client_ref column not there yet (migration 0002 not applied): save without it
+  if (error?.code === "PGRST204") ({ error } = await supabase.from("expenses").insert(row));
+  // unique (user_id, client_ref): two submits raced and the other one won
+  if (error && error.code !== "23505") throw new Error(error.message);
   revalidatePath("/"); redirect("/");
 }
 
