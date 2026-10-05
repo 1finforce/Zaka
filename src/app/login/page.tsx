@@ -5,7 +5,9 @@ export default function Login() {
   const [email, setEmail] = useState(""); const [sent, setSent] = useState(false); const [err, setErr] = useState("");
   const send = async () => {
     const { error } = await createClient().auth.signInWithOtp({ email, options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` } });
-    error ? setErr(error.message) : setSent(true);
+    // the signup trigger refuses emails with no org; Supabase reports that generically
+    const unregistered = error && /Database error saving new user|Signups not allowed/.test(error.message);
+    error ? setErr(unregistered ? "This email isn't registered. Ask your admin for an invite." : error.message) : setSent(true);
   };
   return (
     <main className="min-h-dvh grid place-items-center p-6">
