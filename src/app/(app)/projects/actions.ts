@@ -4,14 +4,15 @@ import { fromCsv } from "@/lib/csv";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-const back: (msg: string) => never = msg => redirect(`/projects?err=${encodeURIComponent(msg)}`);
+// keep = the ?edit= / ?new= param so the project form stays open
+const back: (msg: string, keep?: string) => never = (msg, keep) => redirect(`/projects?${keep ? `${keep}&` : ""}err=${encodeURIComponent(msg)}`);
 
 export async function saveProject(form: FormData) {
   const { supabase, profile } = await requireAdmin();
   const id = form.get("id") as string | null;
   const row = { org_id: profile.org_id, name: form.get("name"), code: String(form.get("code")).toUpperCase(), colour: form.get("colour"), access: form.get("access"), status: form.get("status") ?? "active" };
   const { data, error } = id ? await supabase.from("projects").update(row).eq("id", id).select("id").single() : await supabase.from("projects").insert(row).select("id").single();
-  if (error) back(error.code === "23505" ? `Project code ${row.code} already exists` : error.message);
+  if (error) back(error.code === "23505" ? `Project code ${row.code} already exists` : error.message, id ? `edit=${encodeURIComponent(id)}` : "new=1");
   const members = form.getAll("members") as string[];
   await supabase.from("project_members").delete().eq("project_id", data.id);
   if (row.access === "restricted" && members.length) await supabase.from("project_members").insert(members.map(user_id => ({ project_id: data.id, user_id })));
