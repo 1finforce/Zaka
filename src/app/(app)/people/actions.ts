@@ -8,9 +8,9 @@ async function requireOrgAdmin() { const ctx = await requireProfile(); if (ctx.p
 const back = (msg: string, ok = false) => redirect(`/people?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
 
 export async function invite(form: FormData) {
-  await requireOrgAdmin();
+  const { profile } = await requireOrgAdmin();
   const admin = createAdminClient(); const email = String(form.get("email")).trim().toLowerCase();
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: form.get("full_name") }, redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` });
+  const { error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: form.get("full_name"), org_id: profile.org_id }, redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` });
   if (error) back(error.message);
   // profile is created by trigger; apply role / allowance after
   await admin.from("profiles").update({ role: form.get("role"), allowance_override: form.get("allowance") ? Number(form.get("allowance")) : null }).eq("email", email);

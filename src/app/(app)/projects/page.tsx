@@ -3,7 +3,7 @@ import { requireAdmin, money, COLOURS } from "@/lib/session";
 import { saveProject, setStatus, importProjects } from "./actions";
 import { MonthlyBars } from "@/components/Charts";
 
-export default async function Projects({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string }> }) {
+export default async function Projects({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; err?: string }> }) {
   const { supabase } = await requireAdmin(); const sp = await searchParams;
   const now = new Date(); const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1); return { key: key(d), month: d.toLocaleString("en-ZA", { month: "short" }), total: 0 }; });
@@ -27,6 +27,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     <>
       <h1 className="font-display text-3xl mb-1">Projects</h1>
       <p className="text-muted mb-6">Anyone can log against an open project. Restricted projects need a named list.</p>
+      {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4">{sp.err}</div>}
       <div className="grid grid-cols-12 gap-4 mb-6">
         <Stat cls="bg-peri text-peri-ink" l="Spent this month" v={money(total)} />
         <Stat cls="bg-mint text-mint-ink" l="vs last month" v={delta === null ? "—" : `${delta > 0 ? "+" : ""}${delta}%`} />
