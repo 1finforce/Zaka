@@ -4,6 +4,14 @@ import { fromCsv } from "@/lib/csv";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+type Supabase = Awaited<ReturnType<typeof requireProfile>>["supabase"];
+/** Uploads into the user's own receipts folder (the storage policy requires it). */
+async function uploadReceipt(supabase: Supabase, userId: string, file: File) {
+  const path = `${userId}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+  const { error } = await supabase.storage.from("receipts").upload(path, file, { contentType: file.type });
+  return { path, error };
+}
+
 export async function createExpense(form: FormData) {
   const { supabase, profile } = await requireProfile();
   const client_ref = String(form.get("client_ref") ?? "") || null;
@@ -15,9 +23,9 @@ export async function createExpense(form: FormData) {
   const file = form.get("receipt") as File | null;
   let receipt_path: string | null = null;
   if (file && file.size > 0) {
-    receipt_path = `${profile.id}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-    const { error } = await supabase.storage.from("receipts").upload(receipt_path, file, { contentType: file.type });
+    const { path, error } = await uploadReceipt(supabase, profile.id, file);
     if (error) throw new Error("Receipt upload failed: " + error.message);
+    receipt_path = path;
   }
   const row = {
     org_id: profile.org_id, user_id: profile.id, project_id: form.get("project_id"),
@@ -28,6 +36,40 @@ export async function createExpense(form: FormData) {
   if (error?.code === "PGRST204") ({ error } = await supabase.from("expenses").insert(row));
   // unique (user_id, client_ref): two submits raced and the other one won
   if (error && error.code !== "23505") throw new Error(error.message);
+  revalidatePath("/"); redirect("/");
+}
+
+/** Owner edits an expense. Receipt can always be added or replaced; the rest is locked once it has been paid out in a top-up. */
+export async function updateExpense(form: FormData) {
+  const { supabase, profile } = await requireProfile();
+  const id = String(form.get("id"));
+  const back: (msg: string) => never = msg => redirect(`/expenses/${encodeURIComponent(id)}?err=${encodeURIComponent(msg)}`);
+  const [{ data: exp }, { data: bal }] = await Promise.all([
+    supabase.from("expenses").select("id, project_id, created_at").eq("id", id).eq("user_id", profile.id).maybeSingle(),
+    supabase.from("balances").select("period_start").eq("user_id", profile.id).single(),
+  ]);
+  if (!exp) redirect("/");
+  const locked = !!bal?.period_start && new Date(exp.created_at) <= new Date(bal.period_start);
+  const changes: Record<string, unknown> = {};
+  if (!locked) {
+    const project_id = String(form.get("project_id"));
+    // the update policy doesn't re-check project access, so do it here
+    if (project_id !== exp.project_id) {
+      const { data: allowed } = await supabase.rpc("can_log", { pid: project_id });
+      if (!allowed) back("You can't log expenses against that project.");
+    }
+    Object.assign(changes, { project_id, spent_on: form.get("spent_on"), amount: Number(form.get("amount")), category: form.get("category"), note: form.get("note") || null });
+  }
+  const file = form.get("receipt") as File | null;
+  if (file && file.size > 0) {
+    const { path, error } = await uploadReceipt(supabase, profile.id, file);
+    if (error) back("Receipt upload failed: " + error.message);
+    changes.receipt_path = path;
+  }
+  if (Object.keys(changes).length) {
+    const { error } = await supabase.from("expenses").update(changes).eq("id", id).eq("user_id", profile.id);
+    if (error) back(error.message);
+  }
   revalidatePath("/"); redirect("/");
 }
 

@@ -33,9 +33,9 @@ export default async function Dashboard() {
         <thead><tr><th>Date</th><th>Project</th><th>Category</th><th>Note</th><th>Receipt</th><th className="text-right">Amount</th><th /></tr></thead>
         <tbody>{expenses?.map((e: any) => (
           <tr key={e.id}><td>{e.spent_on}</td><td><span className={`inline-block h-2.5 w-2.5 rounded-sm mr-2 bg-${e.projects?.colour}`} />{e.projects?.name}</td><td>{e.category}</td><td className="whitespace-normal">{e.note}</td>
-            <td>{e.receipt_path ? <Link href={`/api/receipt?path=${encodeURIComponent(e.receipt_path)}`} className="underline">View</Link> : <span className="tag bg-blush text-blush-ink">No receipt</span>}</td>
+            <td>{e.receipt_path ? <Link href={`/api/receipt?path=${encodeURIComponent(e.receipt_path)}`} className="underline">View</Link> : <Link href={`/expenses/${e.id}`} className="tag bg-blush text-blush-ink hover:bg-blush-vivid/40">+ Add receipt</Link>}</td>
             <td className="text-right">{money(e.amount)}</td>
-            <td><form action={deleteExpense}><input type="hidden" name="id" value={e.id} /><button className="text-xs text-muted underline">Delete</button></form></td></tr>
+            <td><div className="flex gap-3"><Link href={`/expenses/${e.id}`} className="text-xs underline">Edit</Link><form action={deleteExpense}><input type="hidden" name="id" value={e.id} /><button className="text-xs text-muted underline">Delete</button></form></div></td></tr>
         ))}{!expenses?.length && <tr><td colSpan={7} className="text-muted text-center py-10">Nothing logged yet. Your first expense goes here.</td></tr>}</tbody>
       </table></div>
     </>
