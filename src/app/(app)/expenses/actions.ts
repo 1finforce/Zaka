@@ -4,12 +4,10 @@ import { fromCsv } from "@/lib/csv";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-type Supabase = Awaited<ReturnType<typeof requireProfile>>["supabase"];
-/** Uploads into the user's own receipts folder (the storage policy requires it). */
-async function uploadReceipt(supabase: Supabase, userId: string, file: File) {
-  const path = `${userId}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-  const { error } = await supabase.storage.from("receipts").upload(path, file, { contentType: file.type });
-  return { path, error };
+/** Receipts are uploaded from the browser (see ReceiptUpload); only accept a path in the user's own folder. */
+function receiptPath(form: FormData, userId: string) {
+  const p = String(form.get("receipt_path") ?? "");
+  return p.startsWith(`${userId}/`) && !p.includes("..") ? p : null;
 }
 
 export async function createExpense(form: FormData) {
@@ -20,13 +18,7 @@ export async function createExpense(form: FormData) {
     const { data: dup } = await supabase.from("expenses").select("id").eq("user_id", profile.id).eq("client_ref", client_ref).maybeSingle();
     if (dup) { revalidatePath("/"); redirect("/"); }
   }
-  const file = form.get("receipt") as File | null;
-  let receipt_path: string | null = null;
-  if (file && file.size > 0) {
-    const { path, error } = await uploadReceipt(supabase, profile.id, file);
-    if (error) throw new Error("Receipt upload failed: " + error.message);
-    receipt_path = path;
-  }
+  const receipt_path = receiptPath(form, profile.id);
   const row = {
     org_id: profile.org_id, user_id: profile.id, project_id: form.get("project_id"),
     spent_on: form.get("spent_on"), amount: Number(form.get("amount")), category: form.get("category"), note: form.get("note") || null, receipt_path,
@@ -60,12 +52,8 @@ export async function updateExpense(form: FormData) {
     }
     Object.assign(changes, { project_id, spent_on: form.get("spent_on"), amount: Number(form.get("amount")), category: form.get("category"), note: form.get("note") || null });
   }
-  const file = form.get("receipt") as File | null;
-  if (file && file.size > 0) {
-    const { path, error } = await uploadReceipt(supabase, profile.id, file);
-    if (error) back("Receipt upload failed: " + error.message);
-    changes.receipt_path = path;
-  }
+  const receipt_path = receiptPath(form, profile.id);
+  if (receipt_path) changes.receipt_path = receipt_path;
   if (Object.keys(changes).length) {
     const { error } = await supabase.from("expenses").update(changes).eq("id", id).eq("user_id", profile.id);
     if (error) back(error.message);

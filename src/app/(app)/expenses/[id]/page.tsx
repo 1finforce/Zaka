@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireProfile, CATEGORIES, money } from "@/lib/session";
 import SubmitButton from "@/components/SubmitButton";
+import ReceiptUpload from "@/components/ReceiptUpload";
+import UploadGate from "@/components/UploadGate";
 import { updateExpense } from "../actions";
 
 export default async function EditExpense({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ err?: string }> }) {
@@ -24,7 +26,7 @@ export default async function EditExpense({ params, searchParams }: { params: Pr
       <h1 className="font-display text-3xl mb-1">{e.receipt_path ? "Edit expense" : "Add a receipt"}</h1>
       <p className="text-muted mb-6">{locked ? "This expense has been paid out, so only the receipt can change." : "Fix any details, or add or replace the receipt."}</p>
       {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4 max-w-2xl">{sp.err}</div>}
-      <form action={updateExpense} className="grid md:grid-cols-2 gap-4 max-w-2xl">
+      <form action={updateExpense} className="grid md:grid-cols-2 gap-4 max-w-2xl"><UploadGate>
         <input type="hidden" name="id" value={e.id} />
         {locked ? (
           <div className="card md:col-span-2 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -46,11 +48,10 @@ export default async function EditExpense({ params, searchParams }: { params: Pr
           {e.receipt_path
             ? <div className="flex flex-wrap items-center gap-3 mb-3 text-sm"><span className="tag bg-mint text-mint-ink">Receipt attached</span><a href={`/api/receipt?path=${encodeURIComponent(e.receipt_path)}`} target="_blank" rel="noopener" className="underline">View current receipt</a></div>
             : <div className="mb-3"><span className="tag bg-blush text-blush-ink">No receipt yet</span></div>}
-          <label className="block text-sm text-muted">{e.receipt_path ? "Replace it with a new photo or PDF (optional)" : "Take a photo or choose a file"}
-            <input name="receipt" type="file" accept="image/*,application/pdf" required={locked && !e.receipt_path} className="mt-1.5 block w-full rounded-xl border border-dashed border-peri-ink bg-peri text-peri-ink p-6 text-sm" /></label>
+          <ReceiptUpload userId={profile.id} required={locked && !e.receipt_path} label={e.receipt_path ? "Replace it with a new photo or PDF (optional)" : "Take a photo or choose one from your phone"} />
         </div>
         <div className="md:col-span-2 flex flex-wrap gap-2"><SubmitButton pendingText="Saving…">{locked ? "Save receipt" : "Save changes"}</SubmitButton><Link href="/" className="btn-line">Cancel</Link></div>
-      </form>
+      </UploadGate></form>
     </>
   );
 }
