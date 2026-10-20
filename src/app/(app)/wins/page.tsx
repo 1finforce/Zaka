@@ -1,6 +1,7 @@
 import { requireProfile, isAdmin } from "@/lib/session";
 import { WIN_TAGS, WIN_SELECT, tagStyle, initials, ago, personName } from "@/lib/wins";
 import SubmitButton from "@/components/SubmitButton";
+import Confetti from "@/components/Confetti";
 import { giveWin, hideWin } from "./actions";
 
 export default async function Wins({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
@@ -13,7 +14,7 @@ export default async function Wins({ searchParams }: { searchParams: Promise<{ o
     <>
       <h1 className="font-display text-3xl mb-1">Wins</h1>
       <p className="text-muted mb-6">Say thanks when someone does something great. Wins show up here and on the office TV.</p>
-      {sp.ok && <div className="bg-mint text-mint-ink rounded-xl p-4 mb-4">{sp.ok}</div>}
+      {sp.ok && <><Confetti burst={sp.ok} count={36} /><div className="bg-mint text-mint-ink rounded-xl p-4 mb-4">{sp.ok}</div></>}
       {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4">{sp.err}</div>}
       {error ? <div className="bg-butter text-butter-ink rounded-xl p-4">Wins isn&apos;t switched on yet. An admin needs to run <code>supabase/migrations/0004_wins.sql</code>.</div> : (<>
         <form action={giveWin} className="card grid md:grid-cols-2 gap-3 mb-6 max-w-3xl">

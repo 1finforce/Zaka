@@ -29,4 +29,10 @@ input[type="date"].input { @apply appearance-none min-h-[2.875rem]; } input[type
 /* TV board card change */
 @keyframes zk-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .zk-fade { animation: zk-fade .9s ease both; }
-@media (prefers-reduced-motion: reduce) { .zk-fade { animation: none; } }
+/* big card arrives with a small bounce */
+@keyframes zk-pop { 0% { opacity: 0; transform: translateY(14px) scale(.97); } 60% { opacity: 1; transform: translateY(0) scale(1.01); } 100% { transform: none; } }
+.zk-pop { animation: zk-pop .9s cubic-bezier(.2,.8,.3,1) both; }
+/* confetti piece (see Confetti.tsx) */
+.zk-confetti { position: absolute; top: -3vh; opacity: 0; animation-name: zk-fall; animation-timing-function: cubic-bezier(.3,.5,.5,1); animation-fill-mode: forwards; }
+@keyframes zk-fall { 0% { opacity: 1; transform: translate3d(0,0,0) rotate(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translate3d(var(--dx), 106vh, 0) rotate(var(--rot)); } }
+@media (prefers-reduced-motion: reduce) { .zk-fade, .zk-pop { animation: none; } }
