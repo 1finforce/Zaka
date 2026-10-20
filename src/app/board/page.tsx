@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/server";
 import { WIN_SELECT, BOARD_COOKIE, ago, personName } from "@/lib/wins";
 import WinCarousel from "@/components/WinCarousel";
+import AutoRefresh from "@/components/AutoRefresh";
 import SubmitButton from "@/components/SubmitButton";
 import { pairBoard } from "./actions";
 
@@ -36,8 +37,9 @@ export default async function Board({ searchParams }: { searchParams: Promise<{ 
   const wins = (data ?? []).map(w => ({ id: w.id, tag: w.tag, message: w.message, when: ago(w.created_at), from: personName(w.from), to: personName(w.to) }));
   return (
     <div className="min-h-dvh flex flex-col gap-6 xl:gap-10 p-5 md:p-10 xl:p-14">
-      {/* reload every 5 min to pick up new wins */}
-      <meta httpEquiv="refresh" content="300" />
+      {/* pick up new wins every 30s; the full reload is a fallback if the TV's browser ever gets stuck */}
+      <AutoRefresh seconds={30} />
+      <meta httpEquiv="refresh" content="1800" />
       <header className="flex items-center gap-4 xl:gap-5">
         <img src="/logo.svg" alt="Zaka" className="h-12 w-12 xl:h-16 xl:w-16 rounded-2xl shadow-soft ring-1 ring-line" />
         <div className="min-w-0"><div className="font-display text-2xl md:text-3xl xl:text-5xl leading-tight truncate">{org.name}</div><div className="text-muted md:text-lg xl:text-2xl">Recent wins</div></div>

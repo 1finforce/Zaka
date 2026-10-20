@@ -7,13 +7,17 @@ export type BoardWin = { id: string; tag: string; message: string; when: string;
 /** TV board: one big win at a time, cycling every 12s, with the next few as small cards below. */
 export default function WinCarousel({ wins }: { wins: BoardWin[] }) {
   const [i, setI] = useState(0);
+  // a new win just came in: show it straight away
+  const newest = wins[0]?.id;
+  useEffect(() => setI(0), [newest]);
   useEffect(() => {
     if (wins.length < 2) return;
     const t = setInterval(() => setI(n => (n + 1) % wins.length), 12000);
     return () => clearInterval(t);
   }, [wins.length]);
-  const w = wins[i]; const s = tagStyle(w.tag);
-  const next = Array.from({ length: Math.min(6, wins.length - 1) }, (_, k) => wins[(i + 1 + k) % wins.length]);
+  const at = i % wins.length; // the list can shrink if an admin hides a win
+  const w = wins[at]; const s = tagStyle(w.tag);
+  const next = Array.from({ length: Math.min(6, wins.length - 1) }, (_, k) => wins[(at + 1 + k) % wins.length]);
   return (
     <>
       <section key={w.id} aria-live="polite" className={`zk-fade tile flex-1 min-h-[20rem] flex flex-col justify-center p-8 md:p-12 xl:p-20 shadow-soft ${s.tint}`}>
@@ -23,7 +27,7 @@ export default function WinCarousel({ wins }: { wins: BoardWin[] }) {
         <div className="mt-2 opacity-70 md:text-lg xl:text-2xl">{w.when}</div>
       </section>
       {next.length > 0 && (
-        <div key={`strip-${i}`} className="zk-fade grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 xl:gap-4">
+        <div key={`strip-${at}`} className="zk-fade grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 xl:gap-4">
           {next.map(x => (
             <div key={x.id} className={`tile p-4 xl:p-5 ${tagStyle(x.tag).tint}`}>
               <div className="text-xs xl:text-sm font-semibold opacity-80">{x.tag}</div>
