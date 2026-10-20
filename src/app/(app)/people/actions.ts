@@ -2,7 +2,7 @@
 import { requireProfile } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { randomBytes } from "crypto";
+import { randomBytes, randomInt } from "crypto";
 import { redirect } from "next/navigation";
 
 async function requireOrgAdmin() { const ctx = await requireProfile(); if (ctx.profile.role !== "org_admin") redirect("/"); return ctx; }
@@ -29,11 +29,23 @@ export async function setDefaultAllowance(form: FormData) {
   await supabase.from("organisations").update({ default_allowance: Number(form.get("amount")) }).eq("id", profile.org_id);
   revalidatePath("/people"); revalidatePath("/topup"); revalidatePath("/");
 }
-/** New TV board link; the old one stops working straight away. */
-export async function regenerateBoardLink() {
+/** One-time 6-digit code a TV types in at /board. Lasts 10 minutes. */
+export async function makeBoardCode() {
   const { supabase, profile } = await requireOrgAdmin();
-  const { error } = await supabase.from("organisations").update({ board_token: randomBytes(16).toString("hex") }).eq("id", profile.org_id);
+  for (let i = 0; i < 5; i++) {
+    const board_code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+    const { error } = await supabase.from("organisations").update({ board_code, board_code_expires: new Date(Date.now() + 10 * 60 * 1000).toISOString() }).eq("id", profile.org_id);
+    if (!error) { revalidatePath("/people"); return; }
+    if (error.code !== "23505") back(error.message); // 23505: another org holds that code right now, try another
+  }
+  back("Couldn't make a code. Try again.");
+}
+
+/** New board token, so every paired TV drops back to the code screen. */
+export async function disconnectBoards() {
+  const { supabase, profile } = await requireOrgAdmin();
+  const { error } = await supabase.from("organisations").update({ board_token: randomBytes(16).toString("hex"), board_code: null, board_code_expires: null }).eq("id", profile.org_id);
   if (error) back(error.message);
   revalidatePath("/people");
-  back("New TV board link created. The old link no longer works.", true);
+  back("All TVs disconnected. Get a new code to connect one again.", true);
 }

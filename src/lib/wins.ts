@@ -26,3 +26,6 @@ export function ago(iso: string, now = Date.now()) {
 /** select() for a win with both people's names */
 export const WIN_SELECT = "id, tag, message, hidden, created_at, from:profiles!wins_from_user_fkey(full_name), to:profiles!wins_to_user_fkey(full_name)";
 export const personName = (p: unknown) => (p as { full_name?: string | null } | null)?.full_name || "Someone";
+
+/** cookie on a paired TV; holds the org's board_token */
+export const BOARD_COOKIE = "zaka_board";

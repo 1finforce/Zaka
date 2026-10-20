@@ -1,11 +1,14 @@
 import { requireAdmin, money } from "@/lib/session";
-import { invite, updatePerson, setDefaultAllowance, regenerateBoardLink } from "./actions";
-import CopyButton, { ConfirmSubmit } from "@/components/CopyButton";
+import { invite, updatePerson, setDefaultAllowance, makeBoardCode, disconnectBoards } from "./actions";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
+import SubmitButton from "@/components/SubmitButton";
 export default async function People({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
   const { supabase, profile } = await requireAdmin(); const orgAdmin = profile.role === "org_admin";
   const sp = await searchParams;
   const [{ data: org }, { data: people }] = await Promise.all([supabase.from("organisations").select("*").single(), supabase.from("profiles").select("*").order("full_name")]);
-  const boardUrl = org?.board_token ? `${process.env.NEXT_PUBLIC_APP_URL}/board/${org.board_token}` : null;
+  const boardReady = !!org && "board_code" in org;
+  const codeMins = org?.board_code && org.board_code_expires ? Math.ceil((new Date(org.board_code_expires).getTime() - Date.now()) / 60000) : 0;
+  const boardAt = `${(process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/^https?:\/\//, "")}/board`;
   return (
     <>
       <h1 className="font-display text-3xl mb-1">People</h1>
@@ -13,11 +16,14 @@ export default async function People({ searchParams }: { searchParams: Promise<{
       {sp.ok && <div className="bg-mint text-mint-ink rounded-xl p-4 mb-4">{sp.ok}</div>}
       {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4">{sp.err}</div>}
       {orgAdmin && (<div className="card grid gap-3 mb-6">
-        <div><h2 className="font-semibold">TV board</h2><p className="text-sm text-muted">Open this link on the office TV to show recent wins. Anyone with the link can see it, so regenerate it if it gets shared too widely.</p></div>
-        {boardUrl ? (<>
-          <div className="flex flex-wrap items-center gap-2"><code className="min-w-0 flex-1 basis-60 truncate rounded-xl bg-bg border border-line px-3 py-2.5 text-sm">{boardUrl}</code><CopyButton text={boardUrl} /><a href={boardUrl} target="_blank" rel="noopener" className="btn-line">Open</a></div>
-          <form action={regenerateBoardLink}><ConfirmSubmit message="Make a new link? The TV will stop showing wins until you open the new link on it." className="text-sm text-muted underline">Regenerate link</ConfirmSubmit></form>
-        </>) : <p className="text-sm text-butter-ink">Run <code>supabase/migrations/0004_wins.sql</code> to switch this on.</p>}
+        <div><h2 className="font-semibold">TV board</h2><p className="text-sm text-muted">On the office TV, open <b className="text-ink">{boardAt}</b> and type in a code. Each code works once, for 10 minutes; the TV stays connected after that.</p></div>
+        {boardReady ? (<>
+          {codeMins > 0 && <div className="rounded-xl bg-peri text-peri-ink p-4 text-center"><div className="font-display text-5xl tracking-[0.3em] pl-[0.3em]">{org.board_code}</div><div className="text-sm mt-1">Valid for about {codeMins} more minute{codeMins === 1 ? "" : "s"}</div></div>}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <form action={makeBoardCode}><SubmitButton pendingText="Getting code…" className="btn-soft">{codeMins > 0 ? "Get a new code" : "Get a TV code"}</SubmitButton></form>
+            <form action={disconnectBoards}><ConfirmSubmit message="Disconnect every TV showing wins? Each one will need a new code." className="text-sm text-muted underline">Disconnect all TVs</ConfirmSubmit></form>
+          </div>
+        </>) : <p className="text-sm text-butter-ink">Run <code>supabase/migrations/0004_wins.sql</code> and <code>0005_board_codes.sql</code> to switch this on.</p>}
       </div>)}
       {orgAdmin && (<div className="grid md:grid-cols-2 gap-4 mb-6">
         <form action={invite} className="card grid gap-3"><h2 className="font-semibold">Invite someone</h2>
