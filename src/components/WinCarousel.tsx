@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Confetti from "./Confetti";
-import { tagStyle } from "@/lib/wins";
+import { tagStyle, ago } from "@/lib/wins";
 
-export type BoardWin = { id: string; tag: string; message: string; when: string; from: string; to: string };
+export type BoardWin = { id: string; tag: string; message: string; at: string; from: string; to: string };
 
 /** TV board: one big win at a time, cycling every 12s, with the next few as small cards below. */
 export default function WinCarousel({ wins }: { wins: BoardWin[] }) {
@@ -32,7 +32,8 @@ export default function WinCarousel({ wins }: { wins: BoardWin[] }) {
         <div className="flex flex-wrap gap-2 xl:gap-3">{w.id === freshId && <span className="tag bg-white text-ink text-sm xl:text-xl px-4 py-1">New</span>}<span className="tag bg-white/60 text-sm xl:text-xl px-4 py-1">{w.tag}</span></div>
         <p className="font-display text-3xl md:text-5xl xl:text-6xl leading-tight mt-6 xl:mt-10 break-words">&ldquo;{w.message}&rdquo;</p>
         <div className="mt-8 xl:mt-12 text-xl md:text-2xl xl:text-4xl font-semibold">{w.from} <span className="opacity-60">→</span> {w.to}</div>
-        <div className="mt-2 opacity-70 md:text-lg xl:text-2xl">{w.when}</div>
+        {/* worked out on the TV (re-renders every 12s), so it stays current between hourly server checks */}
+        <div className="mt-2 opacity-70 md:text-lg xl:text-2xl" suppressHydrationWarning>{ago(w.at)}</div>
       </section>
       {next.length > 0 && (
         <div key={`strip-${at}`} className="zk-fade grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 xl:gap-4">
