@@ -26,13 +26,7 @@ input[type="date"].input { @apply appearance-none min-h-[2.875rem]; } input[type
 .tile::before { content: ""; position: absolute; right: -2.25rem; top: -2.25rem; width: 7rem; height: 7rem; border-radius: 9999px; background: rgba(255,255,255,.4); }
 .tile::after { content: ""; position: absolute; right: 1.5rem; bottom: -2.5rem; width: 4.5rem; height: 4.5rem; border-radius: 9999px; border: 10px solid rgba(255,255,255,.3); }
 .tile > * { position: relative; z-index: 1; }
-/* TV board card change */
-@keyframes zk-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.zk-fade { animation: zk-fade .9s ease both; }
-/* big card arrives with a small bounce */
-@keyframes zk-pop { 0% { opacity: 0; transform: translateY(14px) scale(.97); } 60% { opacity: 1; transform: translateY(0) scale(1.01); } 100% { transform: none; } }
-.zk-pop { animation: zk-pop .9s cubic-bezier(.2,.8,.3,1) both; }
 /* confetti piece (see Confetti.tsx) */
 .zk-confetti { position: absolute; top: -3vh; opacity: 0; animation-name: zk-fall; animation-timing-function: cubic-bezier(.3,.5,.5,1); animation-fill-mode: forwards; }
 @keyframes zk-fall { 0% { opacity: 1; transform: translate3d(0,0,0) rotate(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translate3d(var(--dx), 106vh, 0) rotate(var(--rot)); } }
-@media (prefers-reduced-motion: reduce) { .zk-fade, .zk-pop { animation: none; } }
+/* TV board slides rotate via .zk-slide, built per board in app/board/page.tsx */
