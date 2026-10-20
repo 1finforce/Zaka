@@ -1,15 +1,24 @@
 import { requireAdmin, money } from "@/lib/session";
-import { invite, updatePerson, setDefaultAllowance } from "./actions";
+import { invite, updatePerson, setDefaultAllowance, regenerateBoardLink } from "./actions";
+import CopyButton, { ConfirmSubmit } from "@/components/CopyButton";
 export default async function People({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
   const { supabase, profile } = await requireAdmin(); const orgAdmin = profile.role === "org_admin";
   const sp = await searchParams;
   const [{ data: org }, { data: people }] = await Promise.all([supabase.from("organisations").select("*").single(), supabase.from("profiles").select("*").order("full_name")]);
+  const boardUrl = org?.board_token ? `${process.env.NEXT_PUBLIC_APP_URL}/board/${org.board_token}` : null;
   return (
     <>
       <h1 className="font-display text-3xl mb-1">People</h1>
       <p className="text-muted mb-6">Invite by email. The default allowance is {money(org?.default_allowance ?? 0)}; override it per person if needed.</p>
       {sp.ok && <div className="bg-mint text-mint-ink rounded-xl p-4 mb-4">{sp.ok}</div>}
       {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4">{sp.err}</div>}
+      {orgAdmin && (<div className="card grid gap-3 mb-6">
+        <div><h2 className="font-semibold">TV board</h2><p className="text-sm text-muted">Open this link on the office TV to show recent wins. Anyone with the link can see it, so regenerate it if it gets shared too widely.</p></div>
+        {boardUrl ? (<>
+          <div className="flex flex-wrap items-center gap-2"><code className="min-w-0 flex-1 basis-60 truncate rounded-xl bg-bg border border-line px-3 py-2.5 text-sm">{boardUrl}</code><CopyButton text={boardUrl} /><a href={boardUrl} target="_blank" rel="noopener" className="btn-line">Open</a></div>
+          <form action={regenerateBoardLink}><ConfirmSubmit message="Make a new link? The TV will stop showing wins until you open the new link on it." className="text-sm text-muted underline">Regenerate link</ConfirmSubmit></form>
+        </>) : <p className="text-sm text-butter-ink">Run <code>supabase/migrations/0004_wins.sql</code> to switch this on.</p>}
+      </div>)}
       {orgAdmin && (<div className="grid md:grid-cols-2 gap-4 mb-6">
         <form action={invite} className="card grid gap-3"><h2 className="font-semibold">Invite someone</h2>
           <input name="full_name" placeholder="Full name" required className="input" /><input name="email" type="email" placeholder="email@company.com" required className="input" />

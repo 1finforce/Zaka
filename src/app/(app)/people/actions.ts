@@ -2,6 +2,7 @@
 import { requireProfile } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 import { redirect } from "next/navigation";
 
 async function requireOrgAdmin() { const ctx = await requireProfile(); if (ctx.profile.role !== "org_admin") redirect("/"); return ctx; }
@@ -27,4 +28,12 @@ export async function setDefaultAllowance(form: FormData) {
   const { supabase, profile } = await requireOrgAdmin();
   await supabase.from("organisations").update({ default_allowance: Number(form.get("amount")) }).eq("id", profile.org_id);
   revalidatePath("/people"); revalidatePath("/topup"); revalidatePath("/");
+}
+/** New TV board link; the old one stops working straight away. */
+export async function regenerateBoardLink() {
+  const { supabase, profile } = await requireOrgAdmin();
+  const { error } = await supabase.from("organisations").update({ board_token: randomBytes(16).toString("hex") }).eq("id", profile.org_id);
+  if (error) back(error.message);
+  revalidatePath("/people");
+  back("New TV board link created. The old link no longer works.", true);
 }

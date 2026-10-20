@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 // [href, label, dot colour]
-const everyone = [["/", "My balance", "bg-mint-vivid"], ["/expenses/new", "Log an expense", "bg-peach-vivid"]];
+const everyone = [["/", "My balance", "bg-mint-vivid"], ["/expenses/new", "Log an expense", "bg-peach-vivid"], ["/wins", "Wins", "bg-sky-vivid"]];
 const admin = [["/projects", "Projects", "bg-peri-vivid"], ["/topup", "Monthly top-up", "bg-butter-vivid"], ["/people", "People", "bg-blush-vivid"]];
 
 export default function Sidebar({ name, role }: { name: string; role: string }) {
