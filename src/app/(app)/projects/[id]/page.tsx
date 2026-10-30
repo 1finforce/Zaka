@@ -3,16 +3,18 @@ import { requireAdmin, money } from "@/lib/session";
 import { MonthlyBars } from "@/components/Charts";
 const PALETTE = ["bg-peri", "bg-peach", "bg-mint", "bg-butter", "bg-blush", "bg-lilac", "bg-sky"];
 
-export default async function ProjectStats({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ range?: string }> }) {
-  const { supabase } = await requireAdmin(); const { id } = await params; const { range = "month" } = await searchParams;
+export default async function ProjectStats({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ range?: string; ok?: string }> }) {
+  const { supabase } = await requireAdmin(); const { id } = await params; const { range = "month", ok } = await searchParams;
   const { data: project } = await supabase.from("projects").select("*").eq("id", id).single();
   if (!project) return <p>Project not found.</p>;
   const from = new Date(); from.setDate(1); if (range === "quarter") from.setMonth(from.getMonth() - 2); if (range === "all") from.setFullYear(2000);
   const six = new Date(); six.setDate(1); six.setMonth(six.getMonth() - 5);
-  const [{ data: rows }, { data: hist }] = await Promise.all([
+  const [{ data: rows }, { data: hist }, { data: team }] = await Promise.all([
     supabase.from("expenses").select("amount, category, note, receipt_path, user_id, profiles(full_name)").eq("project_id", id).gte("spent_on", from.toISOString().slice(0, 10)),
     supabase.from("expenses").select("amount, spent_on").eq("project_id", id).gte("spent_on", six.toISOString().slice(0, 10)),
+    supabase.from("project_members").select("profiles(full_name, email)").eq("project_id", id),
   ]);
+  const names = (team ?? []).map(t => { const p = t.profiles as unknown as { full_name: string | null; email: string } | null; return p?.full_name ?? p?.email; }).filter(Boolean).sort() as string[];
   const total = (rows ?? []).reduce((s, r) => s + Number(r.amount), 0);
   const sum = (key: (r: any) => string) => { const m = new Map<string, number>(); rows?.forEach(r => m.set(key(r), (m.get(key(r)) ?? 0) + Number(r.amount))); return [...m].sort((a, b) => b[1] - a[1]); };
   const byPerson = sum(r => r.profiles?.full_name ?? "Unknown"); const byCat = sum(r => r.category);
@@ -27,7 +29,12 @@ export default async function ProjectStats({ params, searchParams }: { params: P
     <>
       <div className="text-sm text-muted mb-2"><Link href="/projects" className="underline">Projects</Link> / {project.name}</div>
       <h1 className="font-display text-3xl mb-1">{project.name}</h1>
-      <p className="text-muted mb-4">{project.code} · {project.access === "all" ? "open to everyone" : "restricted"}</p>
+      <p className="text-muted mb-3">{project.code} · {project.access === "all" ? "open to everyone" : "restricted"}{project.status === "archived" ? " · archived" : ""}</p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-5">
+        <p className="text-sm min-w-0"><span className="text-muted">Who can log expenses: </span>{project.access === "all" ? "Everyone" : names.length ? names.join(", ") : <span className="text-blush-ink font-semibold">Nobody yet</span>}</p>
+        <Link href={`/projects?edit=${project.id}&back=stats#project-form`} className="btn-soft">Edit project &amp; people</Link>
+      </div>
+      {ok && <div className="bg-mint text-mint-ink rounded-xl p-4 mb-5">{ok}</div>}
       <div className="flex flex-wrap gap-1.5 mb-5">{Tab("month", "This month")}{Tab("quarter", "Last 3 months")}{Tab("all", "All time")}</div>
       <div className="grid grid-cols-12 gap-4">
         <Stat cls="bg-peri text-peri-ink" l="Spent" v={money(total)} />
