@@ -2,8 +2,9 @@ import Link from "next/link";
 import { requireAdmin, money, COLOURS } from "@/lib/session";
 import { saveProject, setStatus, importProjects } from "./actions";
 import { MonthlyBars } from "@/components/Charts";
+import SubmitButton from "@/components/SubmitButton";
 
-export default async function Projects({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; err?: string }> }) {
+export default async function Projects({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string; ok?: string; err?: string }> }) {
   const { supabase } = await requireAdmin(); const sp = await searchParams;
   const now = new Date(); const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1); return { key: key(d), month: d.toLocaleString("en-ZA", { month: "short" }), total: 0 }; });
@@ -27,6 +28,7 @@ export default async function Projects({ searchParams }: { searchParams: Promise
     <>
       <h1 className="font-display text-3xl mb-1">Projects</h1>
       <p className="text-muted mb-6">Anyone can log against an open project. Restricted projects need a named list.</p>
+      {sp.ok && <div className="bg-mint text-mint-ink rounded-xl p-4 mb-4">{sp.ok}</div>}
       {sp.err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4">{sp.err}</div>}
       <div className="grid grid-cols-12 gap-4 mb-6">
         <Stat cls="bg-peri text-peri-ink" l="Spent this month" v={money(total)} />
@@ -50,9 +52,9 @@ export default async function Projects({ searchParams }: { searchParams: Promise
           <label className="text-sm font-semibold">Code<input name="code" required defaultValue={editing.code} className="input mt-1.5" placeholder="SB-MIG" /></label>
           <label className="text-sm font-semibold">Colour<select name="colour" defaultValue={editing.colour ?? "peri"} className="input mt-1.5">{COLOURS.map(c => <option key={c}>{c}</option>)}</select></label>
           <label className="text-sm font-semibold">Access<select name="access" defaultValue={editing.access ?? "all"} className="input mt-1.5"><option value="all">Open to everyone</option><option value="restricted">Restricted to named people</option></select></label>
-          <fieldset className="md:col-span-2 text-sm"><legend className="font-semibold mb-2">Members (only used when restricted)</legend>
+          <fieldset className="md:col-span-2 text-sm"><legend className="font-semibold mb-1">Members</legend><p className="text-muted mb-2">Who can log expenses against this project when Access is set to Restricted. Open projects ignore this list.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">{people?.map(p => <label key={p.id} className="flex gap-2 items-center"><input type="checkbox" name="members" value={p.id} defaultChecked={members?.some(m => m.project_id === editing.id && m.user_id === p.id)} />{p.full_name ?? p.email}</label>)}</div></fieldset>
-          <div className="md:col-span-2 flex gap-2"><button className="btn">Save project</button><Link href="/projects" className="btn-line">Cancel</Link></div>
+          <div className="md:col-span-2 flex flex-wrap gap-2"><SubmitButton pendingText="Saving…">Save project</SubmitButton><Link href="/projects" className="btn-line">Cancel</Link></div>
         </form>
       )}
       <div className="card p-0 overflow-x-auto"><table className="tbl">
