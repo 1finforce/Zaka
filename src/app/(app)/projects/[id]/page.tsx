@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ExpenseList from "@/components/ExpenseList";
 import { requireAdmin, money } from "@/lib/session";
 import { MonthlyBars } from "@/components/Charts";
 const PALETTE = ["bg-peri", "bg-peach", "bg-mint", "bg-butter", "bg-blush", "bg-lilac", "bg-sky"];
@@ -49,13 +50,8 @@ export default async function ProjectStats({ params, searchParams }: { params: P
         <div className="card col-span-12 md:col-span-6"><h2 className="text-lg font-semibold mb-3">Biggest expenses</h2>{biggest.map((r: any, i) => <HBar key={i} label={r.note || r.category} v={Number(r.amount)} max={Number(biggest[0]?.amount)} cls={PALETTE[i % 7]} />)}</div>
       </div>
       <div className="flex flex-wrap items-end gap-2 mt-8 mb-3"><h2 className="text-lg font-semibold">Expenses</h2><span className="text-sm text-muted">{rows?.length ?? 0} in this range</span><span className="flex-1" /><a href={`/api/export?scope=project&id=${id}`} className="btn-line">Export CSV</a></div>
-      <div className="card p-0 overflow-x-auto"><table className="tbl">
-        <thead><tr><th>Date</th><th>Person</th><th>Category</th><th>Note</th><th className="text-right">Amount</th><th>Receipt</th></tr></thead>
-        <tbody>{rows?.map((r: any) => (
-          <tr key={r.id}><td>{r.spent_on}</td><td>{r.profiles?.full_name ?? "Unknown"}</td><td>{r.category}</td><td className="whitespace-normal min-w-[10rem]">{r.note}</td><td className="text-right">{money(r.amount)}</td>
-            <td>{r.receipt_path ? <a href={`/api/receipt?path=${encodeURIComponent(r.receipt_path)}`} target="_blank" rel="noopener" className="underline">View receipt</a> : <span className="tag bg-blush text-blush-ink">No receipt</span>}</td></tr>
-        ))}{!rows?.length && <tr><td colSpan={6} className="text-muted text-center py-10">No expenses in this range.</td></tr>}</tbody>
-      </table></div>
+      <ExpenseList whoLabel="Person" empty="No expenses in this range."
+        rows={(rows ?? []).map((r: any) => ({ id: r.id, date: r.spent_on, who: r.profiles?.full_name ?? "Unknown", category: r.category, note: r.note, amount: Number(r.amount), receipt_path: r.receipt_path }))} />
     </>
   );
 }

@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { requireAdmin, money } from "@/lib/session";
 import { markTopped } from "./actions";
 export default async function Topup({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { supabase } = await requireAdmin(); const { tab = "outstanding" } = await searchParams;
-  const { data: all } = await supabase.from("balances").select("*").eq("active", true).order("full_name");
+  const { supabase, profile } = await requireAdmin(); const { tab = "outstanding" } = await searchParams;
+  // org filter: the balances view skips RLS until migration 0006 is applied
+  const { data: all } = await supabase.from("balances").select("*").eq("org_id", profile.org_id).eq("active", true).order("full_name");
   const people = (all ?? []).map(b => ({ ...b, spent: Number(b.spent), remaining: Number(b.remaining), allowance: Number(b.allowance) }));
   const outstanding = people.filter(p => p.spent > 0); const overspent = people.filter(p => p.remaining < 0);
   const list = tab === "all" ? people : tab === "clear" ? people.filter(p => p.spent === 0) : outstanding;
@@ -23,7 +25,7 @@ export default async function Topup({ searchParams }: { searchParams: Promise<{ 
           <thead><tr><th /><th>Person</th><th className="text-right">Allowance</th><th className="text-right">Spent since last top-up</th><th className="text-right">Remaining</th><th className="text-right">Pay out</th><th>Last topped up</th></tr></thead>
           <tbody>{list.map(p => (
             <tr key={p.user_id}><td>{p.spent > 0 && <input type="checkbox" name="user_id" value={p.user_id} defaultChecked />}</td>
-              <td>{p.full_name ?? p.email}</td><td className="text-right">{money(p.allowance)}</td><td className="text-right">{money(p.spent)}</td>
+              <td><Link href={`/topup/${p.user_id}`} className="font-semibold underline decoration-line underline-offset-4 hover:decoration-ink">{p.full_name ?? p.email}</Link></td><td className="text-right">{money(p.allowance)}</td><td className="text-right">{money(p.spent)}</td>
               <td className={`text-right ${p.remaining < 0 ? "text-blush-ink font-semibold" : ""}`}>{money(p.remaining)}</td><td className="text-right font-semibold">{money(p.spent)}</td>
               <td>{p.remaining < 0 ? <span className="tag bg-blush text-blush-ink">Overspent</span> : p.spent > 0 ? <span className="tag bg-butter text-butter-ink">Pending</span> : <span className="tag bg-mint text-mint-ink">Clear</span>} <span className="text-xs text-muted ml-1">{new Date(p.period_start).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}</span></td></tr>
           ))}{!list.length && <tr><td colSpan={7} className="text-muted text-center py-10">Nobody here.</td></tr>}</tbody>
