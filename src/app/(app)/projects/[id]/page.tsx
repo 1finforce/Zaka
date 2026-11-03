@@ -10,7 +10,7 @@ export default async function ProjectStats({ params, searchParams }: { params: P
   const from = new Date(); from.setDate(1); if (range === "quarter") from.setMonth(from.getMonth() - 2); if (range === "all") from.setFullYear(2000);
   const six = new Date(); six.setDate(1); six.setMonth(six.getMonth() - 5);
   const [{ data: rows }, { data: hist }, { data: team }] = await Promise.all([
-    supabase.from("expenses").select("amount, category, note, receipt_path, user_id, profiles(full_name)").eq("project_id", id).gte("spent_on", from.toISOString().slice(0, 10)),
+    supabase.from("expenses").select("id, spent_on, amount, category, note, receipt_path, user_id, profiles(full_name)").eq("project_id", id).gte("spent_on", from.toISOString().slice(0, 10)).order("spent_on", { ascending: false }),
     supabase.from("expenses").select("amount, spent_on").eq("project_id", id).gte("spent_on", six.toISOString().slice(0, 10)),
     supabase.from("project_members").select("profiles(full_name, email)").eq("project_id", id),
   ]);
@@ -48,7 +48,14 @@ export default async function ProjectStats({ params, searchParams }: { params: P
           <div className="flex flex-wrap gap-4 text-sm text-muted">{byCat.map(([k, v], i) => <span key={k}><span className={`inline-block h-2.5 w-2.5 rounded-sm mr-2 ${PALETTE[i % 7]}`} />{k} {money(v)}</span>)}</div></div>
         <div className="card col-span-12 md:col-span-6"><h2 className="text-lg font-semibold mb-3">Biggest expenses</h2>{biggest.map((r: any, i) => <HBar key={i} label={r.note || r.category} v={Number(r.amount)} max={Number(biggest[0]?.amount)} cls={PALETTE[i % 7]} />)}</div>
       </div>
-      <div className="flex mt-6"><span className="flex-1" /><a href={`/api/export?scope=project&id=${id}`} className="btn-line">Export this project&apos;s expenses</a></div>
+      <div className="flex flex-wrap items-end gap-2 mt-8 mb-3"><h2 className="text-lg font-semibold">Expenses</h2><span className="text-sm text-muted">{rows?.length ?? 0} in this range</span><span className="flex-1" /><a href={`/api/export?scope=project&id=${id}`} className="btn-line">Export CSV</a></div>
+      <div className="card p-0 overflow-x-auto"><table className="tbl">
+        <thead><tr><th>Date</th><th>Person</th><th>Category</th><th>Note</th><th className="text-right">Amount</th><th>Receipt</th></tr></thead>
+        <tbody>{rows?.map((r: any) => (
+          <tr key={r.id}><td>{r.spent_on}</td><td>{r.profiles?.full_name ?? "Unknown"}</td><td>{r.category}</td><td className="whitespace-normal min-w-[10rem]">{r.note}</td><td className="text-right">{money(r.amount)}</td>
+            <td>{r.receipt_path ? <a href={`/api/receipt?path=${encodeURIComponent(r.receipt_path)}`} target="_blank" rel="noopener" className="underline">View receipt</a> : <span className="tag bg-blush text-blush-ink">No receipt</span>}</td></tr>
+        ))}{!rows?.length && <tr><td colSpan={6} className="text-muted text-center py-10">No expenses in this range.</td></tr>}</tbody>
+      </table></div>
     </>
   );
 }
