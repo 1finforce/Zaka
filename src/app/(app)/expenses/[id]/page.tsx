@@ -12,7 +12,7 @@ export default async function EditExpense({ params, searchParams }: { params: Pr
     supabase.from("expenses").select("id, project_id, spent_on, amount, category, note, receipt_path, created_at, projects(name)").eq("id", id).eq("user_id", profile.id).maybeSingle(),
     supabase.from("balances").select("period_start").eq("user_id", profile.id).single(),
     supabase.from("projects").select("id, name, access").eq("status", "active").order("name"),
-    supabase.from("project_members").select("project_id"),
+    supabase.from("project_members").select("project_id").eq("user_id", profile.id),
   ]);
   if (!e) notFound();
   // paid out in a top-up already: only the receipt can change

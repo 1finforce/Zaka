@@ -4,6 +4,11 @@ import { fromCsv } from "@/lib/csv";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+/** 42501 = the expenses RLS policy said no, almost always because the person isn't on a restricted project. */
+const saveError = (e: { code?: string; message: string }) => e.code === "42501"
+  ? "You can't log expenses against that project. It's restricted and you're not on its list; ask an admin to add you, or pick another project."
+  : `Couldn't save the expense: ${e.message}`;
+
 /** Receipts are uploaded from the browser (see ReceiptUpload); only accept a path in the user's own folder. */
 function receiptPath(form: FormData, userId: string) {
   const p = String(form.get("receipt_path") ?? "");
@@ -27,7 +32,7 @@ export async function createExpense(form: FormData) {
   // client_ref column not there yet (migration 0002 not applied): save without it
   if (error?.code === "PGRST204") ({ error } = await supabase.from("expenses").insert(row));
   // unique (user_id, client_ref): two submits raced and the other one won
-  if (error && error.code !== "23505") throw new Error(error.message);
+  if (error && error.code !== "23505") redirect(`/expenses/new?err=${encodeURIComponent(saveError(error))}`);
   revalidatePath("/"); redirect("/");
 }
 
@@ -56,7 +61,7 @@ export async function updateExpense(form: FormData) {
   if (receipt_path) changes.receipt_path = receipt_path;
   if (Object.keys(changes).length) {
     const { error } = await supabase.from("expenses").update(changes).eq("id", id).eq("user_id", profile.id);
-    if (error) back(error.message);
+    if (error) back(saveError(error));
   }
   revalidatePath("/"); redirect("/");
 }

@@ -5,16 +5,18 @@ import SubmitButton from "@/components/SubmitButton";
 import ReceiptUpload from "@/components/ReceiptUpload";
 import UploadGate from "@/components/UploadGate";
 
-export default async function NewExpense() {
-  const { supabase, profile } = await requireProfile();
+export default async function NewExpense({ searchParams }: { searchParams: Promise<{ err?: string }> }) {
+  const { supabase, profile } = await requireProfile(); const { err } = await searchParams;
   const { data: all } = await supabase.from("projects").select("id, name, access").eq("status", "active").order("name");
-  const { data: mine } = await supabase.from("project_members").select("project_id");
+  // only my memberships: members_read lets everyone in the org see every project's list
+  const { data: mine } = await supabase.from("project_members").select("project_id").eq("user_id", profile.id);
   const allowed = new Set(mine?.map(m => m.project_id));
   const projects = (all ?? []).filter(p => p.access === "all" || allowed.has(p.id));
   return (
     <>
       <h1 className="font-display text-3xl mb-1">Log an expense</h1>
       <p className="text-muted mb-6">It comes off your balance immediately. Add a receipt now or before month end.</p>
+      {err && <div className="bg-blush text-blush-ink rounded-xl p-4 mb-4 max-w-2xl">{err}</div>}
       <form action={createExpense} className="grid md:grid-cols-2 gap-4 max-w-2xl"><UploadGate>
         <input type="hidden" name="client_ref" value={crypto.randomUUID()} />
         <label className="text-sm font-semibold">Amount (R)<input name="amount" type="number" step="0.01" min="0.01" required className="input mt-1.5" /></label>
